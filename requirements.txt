@@ -1,3 +1,7 @@
-Flask==2.0.1
-gtts==2.2.3
-parselmouth==0.4.0
+flask
+google-cloud-texttospeech
+phonemizer
+parselmouth
+pydub
+openai
+gunicorn
