@@ -292,8 +292,10 @@ def index():
         phoneme_words = get_phoneme_words_and_mouth_shapes(timepoints, text, audio_dur, multiplier)
         print("___get_phoneme_words_and_mouth_shapes--time:"+str(time.time()-code_segment_runtime))
         print("____phoneme_words:"+str(phoneme_words))
+        print("___overall_runtime:"+str(time.time()-overall_runtime))
         return render_template('index.html', audio_file=audio_file, combined=phoneme_words)
-    print("___overall_runtime:"+str(time.time()-overall_runtime))
+    else:
+        print("___overall_runtime:"+str(time.time()-overall_runtime))
     return render_template('index.html')
 
 
