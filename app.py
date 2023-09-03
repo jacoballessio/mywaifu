@@ -122,9 +122,9 @@ def synthesize_text_with_timepoints(text, service_account_file):
     "voice": {
         "languageCode": "en-UK",       # Set the language to Japanese
         "name": "en-GB-Standard-A",    # Specify the voice name
-        "ssmlGender": "NEUTRAL"       # Keep the gender as NEUTRAL or adjust if needed
+        "ssmlGender": "NEUTRAL",       # Keep the gender as NEUTRAL or adjust if needed
     },
-    "audioConfig": {"audioEncoding": "MP3"},
+    "audioConfig": {"audioEncoding": "MP3", "pitch": 8, "speakingRate": 1.1},
     "enableTimePointing": ["SSML_MARK"]
     }
 
@@ -158,11 +158,11 @@ def get_tts_and_info(text):
     print("____Timepoints:"+str(timepoints))
     print("____range:"+str(range(len(timepoints)-1)))
     #print the audio duration in seconds
-    audio_dur = get_audio_duration(audio_content)
+    audio_dur = get_audio_duration(audio_content)-0.8
     print("___dur:"+str())
     #for some reason, the timepoints don't properly end when the audio ends. Do combat this, we will calculate a multiplier based on the duration/last timepoint. This multiplier will be used to multiply the start and end time of each lip shape.
     #multiplier = audio_dur/timepoints[-1][1]
-    multiplier = 1
+    multiplier = audio_dur/timepoints[-1][1]
     print("___multiplier:"+str(multiplier))
 
     return audio_file, timepoints, audio_dur, multiplier, ssml_text
@@ -170,22 +170,23 @@ def get_tts_and_info(text):
 #turn this into a function
 ##each timepoint represents a mark in the ssml_text. Get the word in each mark, and convert it to phonemes. Get the lip shape image for each phoneme. Given the start and end time of each mark, create a map of lip shapes where the start and end time of each lip shape is the start and end time of the mark divided by the number of phonemes in the word.
 def get_phonemes_and_mouth_shapes(timepoints, text, audio_dur, multiplier):
+    timing_offset = 0
     phonemes = []
     for i in range(len(timepoints)):
         next_end = None
         #if we;re at the last timepoint, set the end time to the end of the audio
         if i == len(timepoints)-1:
-            next_end = audio_dur-0.4
+            next_end = audio_dur
         else:
             next_end = timepoints[i+1][1]
 
-        start_time = (timepoints[i][1]*multiplier)
-        end_time = (next_end*multiplier)
+        start_time = (timepoints[i][1]*multiplier) + timing_offset
+        end_time = (next_end*multiplier) + timing_offset
         #make sure the start time is not negative
         if start_time < 0:
             start_time = 0
         if end_time < 0:
-            end_time = 0.1
+            end_time = 0.2
         
         print("word:"+str(word))
         backend = EspeakBackend('en-us')
@@ -215,7 +216,7 @@ def get_phonemes_and_mouth_shapes(timepoints, text, audio_dur, multiplier):
                     phonemes_in_word.append(phn[i])
         print("phonemes_in_word:"+str(phonemes_in_word))
         
-        phoneme_duration = (end_time - start_time)/len(phonemes_in_word)
+        phoneme_duration = ((end_time - start_time)/len(phonemes_in_word))
         print(end_time - start_time)
         for j in range(len(phonemes_in_word)):
             phoneme = phonemes_in_word[j]
@@ -243,7 +244,7 @@ def get_phoneme_words_and_mouth_shapes(timepoints, text, audio_dur, multiplier):
         next_end = None
         #if we;re at the last timepoint, set the end time to the end of the audio
         if i == len(timepoints)-1:
-            next_end = audio_dur-0.4
+            next_end = audio_dur-0.05
         else:
             next_end = timepoints[i+1][1]
 
