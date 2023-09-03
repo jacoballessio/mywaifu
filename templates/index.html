@@ -6,95 +6,71 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lip Sync TTS</title>
 </head>
-<body>
+<body style="display: flex; flex-direction: row;">
     <form action="/" method="post">
         <textarea name="text" cols="30" rows="10"></textarea>
         <button type="submit">Speak</button>
     </form>
-    <img id="lipImage" src="static/lip_shapes/TS.png" alt="Lip Shape">
+    <canvas id="lipCanvas" width="1000" height="1000"></canvas>
 
     {% if request.method == 'POST' %}
         <audio src="{{ audio_file }}"></audio>
-        <div id="imgs">
+        <div id="imgs" style="display: none;">
             {% for shape in mouth_shapes %}
-                <img style="display: none" src="{{ shape }}" alt="mouth shape" width="50" height="50" />
-                
+                <img src="{{ shape }}" alt="mouth shape" width="50" height="50" />
             {% endfor %}
-
         </div>
-        <div id="comb">
-        {% for com in combined %}
-            <p style="display: none">{{ com }}</p>
-        {% endfor %}
+        <div id="comb" style="display: none;">
+            {% for com in combined %}
+                <p>{{ com }}</p>
+            {% endfor %}
         </div>
     {% endif %}
+
     <script>
-        //Display each image in the main image area sequentially, divided up into equal sections of the length of the audio. If there are three images in imgs, we should divide the audio length by 3 and play each image for that amount of time.
-        
-        var lipImage = document.getElementById("lipImage");
+        var canvas = document.getElementById("lipCanvas");
+        var ctx = canvas.getContext("2d");
         var audio = document.getElementsByTagName("audio")[0];
         
         audio.addEventListener('loadedmetadata', function() {
-        //get number of sections to divide image into(all children in id=imgs are the mouth shapes, so how many mouth shapes are there?)
-            //get the duration of the audio
             var audioLength = Math.abs(audio.duration);
-            console.log(audioLength)
             var numSections = document.getElementById("imgs").childElementCount;
             var sectionLength = audioLength / numSections;
-            console.log(audioLength)
-            //play the audio
+
             audio.play();
 
-            //get the combined timings
             let combined = document.getElementById("comb").children;
-            console.log(combined)
-            //The values we are looking for is a python tuple of the form (image path, start time). We need to convert this to a javascript object
             combined = Array.from(combined).map(function(item) {
-                //get the innerHTML
                 let inner = item.innerHTML;
-                //remove the parentheses
-                inner = inner.replace("(", "");
-                inner = inner.replace(")", "");
-                //split on the comma
-                inner = inner.split(",");
-                //get the image path
-                let imgPath = inner[0];
-                //remove the quotes
-                imgPath = imgPath.replace("'", "");
-                //get the start time
-                let start = inner[1];
-                //convert to float
-                start = parseFloat(start);
-                //return the object
+                inner = inner.replace("(", "").replace(")", "");
+                let [imgPath, start] = inner.split(",");
+                imgPath = imgPath.replace(/'/g, "").trim();
+                start = parseFloat(start.trim());
                 return {imgPath: imgPath, start: start};
             });
-            //loop through each element, and display the image for the proper amount of time
-            for(let i = 0; i < combined.length; i++) {
-                //get the image path
-                let imgPath = combined[i].imgPath;
-                //remove any quotes
-                imgPath = imgPath.replace("'", "");
-                //get the start time
-                let start = combined[i].start;
-                //make sure start is not negative
-                if(start < 0) {
-                    start = 0;
-                }
-                //display the image
-                setTimeout(function() {
-                    lipImage.src = imgPath;
-                }, start * 1000);
-            }
-            audioLength = audioLength;
-            if(audioLength < 0) {
-                audioLength = 0;
-            }
-            setTimeout(function() {
-                lipImage.src = "static/lip_shapes/TS.png";
-            }, audioLength * 1000);
 
+            for(let i = 0; i < combined.length; i++) {
+                let imgPath = combined[i].imgPath;
+                let start = combined[i].start;
+                if(start < 0) start = 0;
+                let image = new Image();
+                image.src = imgPath;
+                image.onload = function() {
+                    setTimeout(function() {
+                        ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+                    }, start * 1000);
+                };
+            }
+
+            if(audioLength < 0) audioLength = 0;
+            setTimeout(function() {
+                let defaultImg = new Image();
+                defaultImg.src = "static/lip_shapes/TS.png";
+                defaultImg.onload = function() {
+                    ctx.drawImage(defaultImg, 0, 0, canvas.width, canvas.height);
+                }
+            }, audioLength * 1000);
         });
-        
     </script>
 </body>
 </html>

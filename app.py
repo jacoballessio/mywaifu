@@ -120,8 +120,8 @@ def synthesize_text_with_timepoints(text, service_account_file):
     payload = {
     "input": {"ssml": ssml_text},
     "voice": {
-        "languageCode": "ja-JP",       # Set the language to Japanese
-        "name": "ja-JP-Wavenet-A",    # Specify the voice name
+        "languageCode": "en-UK",       # Set the language to Japanese
+        "name": "en-GB-Standard-A",    # Specify the voice name
         "ssmlGender": "NEUTRAL"       # Keep the gender as NEUTRAL or adjust if needed
     },
     "audioConfig": {"audioEncoding": "MP3"},
