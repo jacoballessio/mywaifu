@@ -277,6 +277,8 @@ def get_phoneme_words_and_mouth_shapes(timepoints, text, audio_dur, multiplier):
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
+    overall_runtime = time.time()
+
     if request.method == 'POST':
         og_text = request.form['text']
         code_segment_runtime = time.time()
@@ -291,7 +293,7 @@ def index():
         print("___get_phoneme_words_and_mouth_shapes--time:"+str(time.time()-code_segment_runtime))
         print("____phoneme_words:"+str(phoneme_words))
         return render_template('index.html', audio_file=audio_file, combined=phoneme_words)
-
+    print("___overall_runtime:"+str(time.time()-overall_runtime))
     return render_template('index.html')
 
 
