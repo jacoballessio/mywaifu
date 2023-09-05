@@ -4,14 +4,38 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link 
+        rel="stylesheet" 
+        href="static/styles/app.css"
+    />
     <title>Lip Sync TTS</title>
 </head>
-<body style="display: flex; flex-direction: row;">
-    <form action="/" method="post">
-        <textarea name="text" cols="30" rows="10"></textarea>
-        <button type="submit">Speak</button>
-    </form>
-    <canvas id="lipCanvas" width="1000" height="1000"></canvas>
+<body style="display: flex; flex-direction: column;">
+    <div id="content-section">
+        <h1 id="title-h1" style="text-align: center;">MYWAIFU.CHAT alpha v-- </h1>
+        <div id="horizontal-section">
+            <div id="vertical-section">
+                
+            </div>
+            <div id="chat-log-container">
+                <div id="chat-log">
+                    <h2>Conversation History:</h2>
+                    {% for message in messages %}
+                        {% if message.role == "user" %}
+                            <p class="user-message">{{ message.content }}</p>
+                        {% else %}
+                            <p class="ai-message">{{ message.content }}</p>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+                <canvas id="lipCanvas" width="500" height="500"></canvas>
+                <form action="/" method="post">
+                    <input type="text" name="text" placeholder="Type your message here..."></input>
+                    <button id="send-button" type="submit">Send</button>
+                </form>
+            </div>
+        </div>
+    </div>
 
     {% if request.method == 'POST' %}
         <audio src="{{ audio_file }}"></audio>
@@ -27,17 +51,38 @@
         </div>
     {% endif %}
 
+
     <script>
         var canvas = document.getElementById("lipCanvas");
         var ctx = canvas.getContext("2d");
         var audio = document.getElementsByTagName("audio")[0];
-        
+        //set default img
+        let defaultImg = new Image();
+        defaultImg.src = "static/lip_shapes/TS.png";
+        defaultImg.onload = function() {
+                        
+            // step 1
+            const oc = document.createElement('canvas');
+            const octx = oc.getContext('2d');
+            oc.width = this.width;
+            oc.height = this.height;
+
+            // step 2: pre-filter image using steps as radius
+            const steps = (oc.width / canvas.width)>>1;
+            octx.filter = `blur(${steps}px)`;
+            octx.drawImage(this, 0, 0);
+
+            // step 3, draw scaled
+            ctx.drawImage(oc, 0, 0, oc.width, oc.height, 0, 0, canvas.width, canvas.height);
+        }
+        //on send-button click, animate a loading symbol in place of the button text
+        document.getElementById("send-button").addEventListener("click", function() {
+            let button = document.getElementById("send-button");
+            button.innerHTML = `<img src="static/imgs/loading.gif" alt="loading" width="20" height="20" />`;
+        }); 
         audio.addEventListener('loadedmetadata', function() {
             var audioLength = Math.abs(audio.duration);
             var numSections = document.getElementById("imgs").childElementCount;
-            var sectionLength = audioLength / numSections;
-
-            audio.play();
 
             let combined = document.getElementById("comb").children;
             combined = Array.from(combined).map(function(item) {
@@ -48,7 +93,9 @@
                 start = parseFloat(start.trim());
                 return {imgPath: imgPath, start: start};
             });
-
+            setTimeout(function() {
+                audio.play();
+            }, 10);
             for(let i = 0; i < combined.length; i++) {
                 let imgPath = combined[i].imgPath;
                 let start = combined[i].start;
@@ -56,8 +103,21 @@
                 let image = new Image();
                 image.src = imgPath;
                 image.onload = function() {
-                    setTimeout(function() {
-                        ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+                    setTimeout(() =>{
+                        // step 1
+                        const oc = document.createElement('canvas');
+                        const octx = oc.getContext('2d');
+                        oc.width = this.width;
+                        oc.height = this.height;
+
+                        // step 2: pre-filter image using steps as radius
+                        const steps = (oc.width / canvas.width)>>1;
+                        octx.filter = `blur(${steps}px)`;
+                        octx.drawImage(this, 0, 0);
+
+                        // step 3, draw scaled
+                        ctx.drawImage(oc, 0, 0, oc.width, oc.height, 0, 0, canvas.width, canvas.height);
+
                     }, start * 1000);
                 };
             }
@@ -67,8 +127,30 @@
                 let defaultImg = new Image();
                 defaultImg.src = "static/lip_shapes/TS.png";
                 defaultImg.onload = function() {
-                    ctx.drawImage(defaultImg, 0, 0, canvas.width, canvas.height);
+                    
+                    // step 1
+                    const oc = document.createElement('canvas');
+                    const octx = oc.getContext('2d');
+                    oc.width = this.width;
+                    oc.height = this.height;
+
+                    // step 2: pre-filter image using steps as radius
+                    const steps = (oc.width / canvas.width)>>1;
+                    octx.filter = `blur(${steps}px)`;
+                    octx.drawImage(this, 0, 0);
+
+                    // step 3, draw scaled
+                    ctx.drawImage(oc, 0, 0, oc.width, oc.height, 0, 0, canvas.width, canvas.height);
                 }
+                //send post request to audio_finished to indicate that the audio has finished playing. Specify which file in the request body
+                //get audio by getting src of audio el
+                let audioSrc = document.getElementsByTagName("audio")[0].src;
+                let audioFile = audioSrc.split("/").pop();
+                let xhr = new XMLHttpRequest();
+                xhr.open("POST", "/audio_finished", true);
+                xhr.setRequestHeader("Content-Type", "application/json");
+                xhr.send(JSON.stringify({audio_file: "static/"+audioFile}));
+                
             }, audioLength * 1000);
         });
     </script>

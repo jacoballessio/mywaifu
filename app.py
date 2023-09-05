@@ -244,7 +244,7 @@ def get_phoneme_words_and_mouth_shapes(timepoints, text, audio_dur, multiplier):
         next_end = None
         #if we;re at the last timepoint, set the end time to the end of the audio
         if i == len(timepoints)-1:
-            next_end = audio_dur-0.05
+            next_end = audio_dur
         else:
             next_end = timepoints[i+1][1]
 
@@ -261,8 +261,9 @@ def get_phoneme_words_and_mouth_shapes(timepoints, text, audio_dur, multiplier):
             #split the phoneme word into a list of phonemes
             phonemes_in_word = phoneme_word.split("|")
             print("____phonemes_in_word:"+str(phonemes_in_word))
-            phoneme_duration = (end_time - start_time)/len(phonemes_in_word)
-            print(end_time - start_time)
+            phoneme_duration = abs((end_time - start_time)/len(phonemes_in_word))
+            print(abs(end_time - start_time))
+            print("____phoneme_duration:"+str(phoneme_duration))
             for j in range(len(phonemes_in_word)):
                 phoneme = phonemes_in_word[j]
                 #convert phoneme to mouth shape
@@ -275,6 +276,7 @@ def get_phoneme_words_and_mouth_shapes(timepoints, text, audio_dur, multiplier):
             print("timepoints has a length of "+str(len(timepoints)))
     return mouth_shapes_and_timings
 
+chat_history = []
 @app.route('/', methods=['GET', 'POST'])
 def index():
     overall_runtime = time.time()
@@ -282,21 +284,37 @@ def index():
     if request.method == 'POST':
         og_text = request.form['text']
         code_segment_runtime = time.time()
-        text = get_openai_response(og_text)
+        response = get_openai_response(og_text)
         print("___get_openai_response--time:"+str(time.time()-code_segment_runtime))
-        text = Punctuation(';:,.!"?()-').remove(text)
+        text = Punctuation(';:,.!"?()-').remove(response)
         code_segment_runtime = time.time()
-        audio_file, timepoints, audio_dur, multiplier, ssml_text = get_tts_and_info(text)
+        audio_file, timepoints, audio_dur, multiplier, ssml_text = get_tts_and_info(response)
         print("___get_tts_and_info--time:"+str(time.time()-code_segment_runtime))
         code_segment_runtime = time.time()
         phoneme_words = get_phoneme_words_and_mouth_shapes(timepoints, text, audio_dur, multiplier)
         print("___get_phoneme_words_and_mouth_shapes--time:"+str(time.time()-code_segment_runtime))
         print("____phoneme_words:"+str(phoneme_words))
         print("___overall_runtime:"+str(time.time()-overall_runtime))
-        return render_template('index.html', audio_file=audio_file, combined=phoneme_words)
+        chat_history.append({"role":"user", "content":og_text})
+        chat_history.append({"role":"ai", "content":response})
+        return render_template('index.html', audio_file=audio_file, combined=phoneme_words, messages=chat_history)
     else:
         print("___overall_runtime:"+str(time.time()-overall_runtime))
     return render_template('index.html')
+
+@app.route('/audio_finished', methods=['POST'])
+def audio_finished():
+    #Get audio_file in body. Delete this file from directory
+    #print everything in the request
+    #get body
+    body = request.get_json()
+    print("____body:"+str(body))
+    #get audio_file
+    audio_file = body['audio_file']
+    print("____audio_file:"+str(audio_file))
+    #delete audio_file
+    os.remove(audio_file)
+    return jsonify({'success':True})
 
 
 def get_openai_response(text):
