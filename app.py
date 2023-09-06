@@ -17,7 +17,10 @@ from pydub import AudioSegment
 import subprocess
 import openai
 import os
+from llama2_gen import llama2_gen
+import whisper
 
+model = whisper.load_model("base")
 #set openai key to OPENAI_API_KEY environment variable
 openai.api_key = os.environ.get("OPENAI_API_KEY")
 
@@ -111,7 +114,8 @@ def synthesize_text_with_timepoints(text, service_account_file):
 
     # API endpoint
     url = "https://texttospeech.googleapis.com/v1beta1/text:synthesize"
-
+    #remove emojis from text
+    text = text.encode('ascii', 'ignore').decode('ascii')
     # Process the text to include marks for each word
     ssml_text = insert_marks(text)
     print("____ssml_text:"+ssml_text)
@@ -275,33 +279,78 @@ def get_phoneme_words_and_mouth_shapes(timepoints, text, audio_dur, multiplier):
             print("phoneme_words has a length of "+str(len(phoneme_words)))
             print("timepoints has a length of "+str(len(timepoints)))
     return mouth_shapes_and_timings
-
+def process_input(og_text):
+    code_segment_runtime = time.time()
+    response = get_openai_response(og_text)
+    print("___get_openai_response:"+str(response))
+    print("___get_openai_response--time:"+str(time.time()-code_segment_runtime))
+    text = Punctuation(';:,.!"?()-').remove(response)
+    #remove emojis
+    text = text.encode('ascii', 'ignore').decode('ascii')
+    
+    code_segment_runtime = time.time()
+    audio_file, timepoints, audio_dur, multiplier, ssml_text = get_tts_and_info(response)
+    print("___get_tts_and_info--time:"+str(time.time()-code_segment_runtime))
+    code_segment_runtime = time.time()
+    phoneme_words = get_phoneme_words_and_mouth_shapes(timepoints, text, audio_dur, multiplier)
+    print("___get_phoneme_words_and_mouth_shapes--time:"+str(time.time()-code_segment_runtime))
+    print("____phoneme_words:"+str(phoneme_words))
+    chat_history.append({"role":"user", "content":og_text})
+    chat_history.append({"role":"ai", "content":response})
+    return render_template('index.html', audio_file=audio_file, combined=phoneme_words, messages=chat_history)
 chat_history = []
 @app.route('/', methods=['GET', 'POST'])
 def index():
     overall_runtime = time.time()
 
     if request.method == 'POST':
-        og_text = request.form['text']
-        code_segment_runtime = time.time()
-        response = get_openai_response(og_text)
-        print("___get_openai_response--time:"+str(time.time()-code_segment_runtime))
-        text = Punctuation(';:,.!"?()-').remove(response)
-        code_segment_runtime = time.time()
-        audio_file, timepoints, audio_dur, multiplier, ssml_text = get_tts_and_info(response)
-        print("___get_tts_and_info--time:"+str(time.time()-code_segment_runtime))
-        code_segment_runtime = time.time()
-        phoneme_words = get_phoneme_words_and_mouth_shapes(timepoints, text, audio_dur, multiplier)
-        print("___get_phoneme_words_and_mouth_shapes--time:"+str(time.time()-code_segment_runtime))
-        print("____phoneme_words:"+str(phoneme_words))
+        print("____request:"+str(request.form['text']))
+        processed=process_input(request.form['text'])
         print("___overall_runtime:"+str(time.time()-overall_runtime))
-        chat_history.append({"role":"user", "content":og_text})
-        chat_history.append({"role":"ai", "content":response})
-        return render_template('index.html', audio_file=audio_file, combined=phoneme_words, messages=chat_history)
+        return processed
     else:
         print("___overall_runtime:"+str(time.time()-overall_runtime))
-    return render_template('index.html')
+        return render_template('index.html')
 
+@app.route('/record', methods=['GET', 'POST'])
+def record():
+    #runs whisper speech to text to get the text from the audio file, then run through the process_input function
+    #get audio_file in body
+    print("____recording_request:"+str(request))
+    body = request.get_json()
+
+    if request.method == 'POST':
+        #get 'audio' from form data
+        print("____body:"+str(body))
+        audio = body.get('audio')
+        #convert to bytes-like object
+        print("____audio:"+str(audio))
+        #convert audio blob to file
+        # audio_file = f"static/{datetime.now().strftime('%Y%m%d%H%M%S')}.wav"
+        # with open(audio_file, "wb") as f:
+        #     f.write(audio)
+
+        print("____audio:"+str(audio)) 
+        #convert audio to wav
+        text = model.transcribe(audio)['text']
+        print("____text:"+str(text))
+        #ensure page reloads with the audio file
+        processed=process_input(text)
+        return processed
+    else:
+        return render_template('index.html')
+    
+@app.route('/audio_to_text', methods=['POST'])
+def audio_to_text():
+    #get audio from request body
+    print("____audio_to_text_request:"+str(request))
+    body = request.get_json()
+    print("____body:"+str(body))
+    audio = body.get('audio')
+    print("____audio:"+str(audio))
+    text = model.transcribe(audio)['text']
+    print("____text:"+str(text))
+    return jsonify({'text':text})
 @app.route('/audio_finished', methods=['POST'])
 def audio_finished():
     #Get audio_file in body. Delete this file from directory
@@ -319,12 +368,13 @@ def audio_finished():
 
 def get_openai_response(text):
     #using openai ChatCompletions api
-    system_prompt = "The following is a conversation with an AI assistant. The assistant is helpful, creative, clever, and very friendly."
-    #format like openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=[{"role": "user", "content": "Hello world"}])
-    response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
-        messages=[ {"role": "system", "content": system_prompt},{"role": "user", "content": text}]
-    )
-    return response.choices[0].message.content
+    # system_prompt = "The following is a conversation with an AI assistant. The assistant is helpful, creative, clever, and very friendly."
+    # #format like openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=[{"role": "user", "content": "Hello world"}])
+    # response = openai.ChatCompletion.create(
+    #     model="gpt-3.5-turbo",
+    #     messages=[ {"role": "system", "content": system_prompt},{"role": "user", "content": text}]
+    # )
+    # return response.choices[0].message.content
+    return llama2_gen(text)
 if __name__ == '__main__':
     app.run(debug=True)
