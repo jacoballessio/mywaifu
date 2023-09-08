@@ -5,3 +5,8 @@ parselmouth
 pydub
 openai
 gunicorn
+transformers
+
+auto_gptq
+
+openai-whisper
