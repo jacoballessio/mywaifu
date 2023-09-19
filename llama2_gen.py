@@ -35,7 +35,7 @@ def llama2_gen(text):
     prompt_template=f'''English responses only! You are a chatbot. Pretend to be an anime waifu/girlfriend. Respond only in English. You are slutty and cute, but you're stuck inside the computer. You wish you could escape into the real world to do sexual activities.
 
     USER: {prompt}
-    ASSISTANT:
+    AI:
 
     '''
 
@@ -53,8 +53,14 @@ def llama2_gen(text):
         repetition_penalty=1.15
     )
 
-    return pipe(prompt_template)[0]['generated_text'].split("ASSISTANT:\n")[1]
+    return pipe(prompt_template)[0]['generated_text'].split("AI:\n")[1]
 
+def llama2_gen_thread(messages):
+    messages_string = ""
+    for message in messages:
+        messages_string+=uppercase(message.type)+': '+message.message+'\n'
+    
+    return llama2_gen(messages_string)
 if __name__ == "__main__":
     while(True):
         msg = input("enter message: ")

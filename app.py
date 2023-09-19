@@ -157,7 +157,7 @@ def phoneme_to_image(phoneme):
 def get_tts_and_info(text):
     SERVICE_ACCOUNT_FILE = "service-account.json"
     audio_content, timepoints, ssml_text = synthesize_text_with_timepoints(text, SERVICE_ACCOUNT_FILE)
-    audio_file = f"static/{datetime.now().strftime('%Y%m%d%H%M%S')}.mp3"
+    audio_file = f"/build/tmp/{datetime.now().strftime('%Y%m%d%H%M%S')}.mp3"
     with open(audio_file, "wb") as f:
         f.write(audio_content)
     print("____Timepoints:"+str(timepoints))
@@ -376,6 +376,6 @@ def get_openai_response(text):
     #     messages=[ {"role": "system", "content": system_prompt},{"role": "user", "content": text}]
     # )
     # return response.choices[0].message.content
-    return llama2_gen(text)
+    return llama2_gen_thread(text)
 if __name__ == '__main__':
     app.run(debug=True)
