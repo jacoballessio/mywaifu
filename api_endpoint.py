@@ -8,7 +8,7 @@ from flask_cors import CORS
 import os
 import json
 from werkzeug.utils import secure_filename
-from llama2_gen import llama2_gen_thread as LLM
+from llama2_gen2 import llama2_gen_thread as LLM
 from tts_phonemes import *
 from flask import send_file
 from flask import send_from_directory
@@ -39,6 +39,9 @@ class LLM_API(Resource):
         print("__ll"+llm_response)
         #remove emojis
         cleaned_text = llm_response.encode('ascii', 'ignore').decode('ascii')
+        
+        if cleaned_text.isspace() or cleaned_text == "" or cleaned_text == None:
+            cleaned_text = "Beeeeeep. Not sure how to pronounce that."
         #get the phoneme mappings and timings
         audio_file, timepoints, audio_dur, multiplier, ssml_text = get_tts_and_info(cleaned_text)
         phoneme_mappings = get_phoneme_words_and_mouth_shapes(timepoints, cleaned_text, audio_dur, multiplier)

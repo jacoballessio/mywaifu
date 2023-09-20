@@ -1,7 +1,7 @@
 from transformers import AutoTokenizer, pipeline, logging
 from auto_gptq import AutoGPTQForCausalLM, BaseQuantizeConfig
 import time
-model_name_or_path = "TheBloke/Luna-AI-Llama2-Uncensored-GPTQ"
+model_name_or_path = "Undi95/MLewd-ReMM-L2-Chat-20B"
 model_basename = "model"
 
 use_triton = False

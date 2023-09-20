@@ -204,8 +204,7 @@ def synthesize_text_with_timepoints(text, service_account_file):
 def get_tts_and_info(text):
     SERVICE_ACCOUNT_FILE = "service-account.json"
     #if text is all spaces, replace with random text
-    if text.isspace():
-        text = "Beep boop beep bo"
+    print("_resrwser_____________________________________________text:"+str(text))
     audio_content, timepoints, ssml_text = synthesize_text_with_timepoints(text, SERVICE_ACCOUNT_FILE)
     audio_file = f"build/static/media/{datetime.now().strftime('%Y%m%d%H%M%S')}.mp3"
     #first create the directory if it doesn't exist
@@ -214,12 +213,15 @@ def get_tts_and_info(text):
     #write the audio content to the file
     with open(audio_file, "wb") as f:
         f.write(audio_content)
-
+    
     audio_dur = get_audio_duration(audio_content)-0.8
 
     #for some reason, the timepoints don't properly end when the audio ends. Do combat this, we will calculate a multiplier based on the duration/last timepoint. This multiplier will be used to multiply the start and end time of each lip shape.
     #multiplier = audio_dur/timepoints[-1][1]
-    multiplier = audio_dur/timepoints[-1][1]
+    try:
+        multiplier = audio_dur/timepoints[-1][1]
+    except:
+        multiplier = 1
 
 
     return audio_file, timepoints, audio_dur, multiplier, ssml_text
