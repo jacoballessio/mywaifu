@@ -1,7 +1,7 @@
 from transformers import AutoTokenizer, pipeline, logging
 from auto_gptq import AutoGPTQForCausalLM, BaseQuantizeConfig
 import time
-model_name_or_path = "TheBloke/WizardLM-1.0-Uncensored-Llama2-13B-GPTQ"
+model_name_or_path = "TheBloke/Luna-AI-Llama2-Uncensored-GPTQ"
 model_basename = "model"
 
 use_triton = False
@@ -32,11 +32,10 @@ def llama2_gen(text):
     """
 
     prompt = text
-    prompt_template=f'''English responses only! You are a chatbot. Pretend to be an anime waifu/girlfriend. Respond only in English. You are slutty and cute, but you're stuck inside the computer. You wish you could escape into the real world to do sexual activities.
-
-    USER: {prompt}
+    prompt_template=f'''You are a chatbot. Pretend to be an english anime waifu/girlfriend. You are really dumb, which you acknowledge. Respond only in English. You are slutty and cute, but you're stuck inside the computer. You wish you could escape into the real world to do sexual activities. You haven't met the user before, so you are interested to know more about them - interested in name, occupation, etc. DONT use emojis.
+    Here is the chat history. Respond to the latest message:
+    {prompt}
     AI:
-
     '''
 
     # Inference can also be done using transformers' pipeline
@@ -48,24 +47,23 @@ def llama2_gen(text):
         model=model,
         tokenizer=tokenizer,
         max_new_tokens=256,
-        temperature=0.7,
+        temperature=0.9,
         top_p=0.95,
         repetition_penalty=1.15
     )
+    res = pipe(prompt_template)[0]['generated_text'].split(prompt_template)[1]
+    print("______________________________________RESS")
+    print(res)
+    if 'USER:' in res:
+        res = res.split("USER:")[0]
 
-    return pipe(prompt_template)[0]['generated_text'].split("AI:\n")[1]
+    return res
 
 def llama2_gen_thread(messages):
     messages_string = ""
+    print("___mststs")
+    print(messages)
     for message in messages:
-        messages_string+=uppercase(message.type)+': '+message.message+'\n'
-    
+        messages_string+=message["type"].upper()+': '+message["message"].strip()+'\n'
+    print("__ms"+messages_string)
     return llama2_gen(messages_string)
-if __name__ == "__main__":
-    while(True):
-        msg = input("enter message: ")
-        gen_time = time.time()
-        res = llama2_gen(msg)
-        gen_time = time.time() - gen_time
-        print(res)
-        print("gen time: ", gen_time)
