@@ -39,25 +39,28 @@ function App() {
     <div className="App">
       <header className="App-header">
         <div className="information-section">
-          <h1>
-            Welcome to MyWaifu.chat
-          </h1>
-          <p>
-          This is an early version of the MyWaifu.chat website. Check out the free demo to the right! You may send up to 15 messages for free.
-If you wish to continue chatting after 15 messages you will need to sign up for our private alpha version.
-          </p>
-          <h1 style={{marginTop: '25%', paddingBottom: '15px', borderBottom: '1px solid #444444', width: '100%'}}>
-            Request alpha access
-          </h1>
-          <p>
-            Want to continue chatting? Sign up for our free private alpha!
-          </p>
-          <form id='email-form' ref={formRef}>
-            <input type="text" placeholder="Email" id='email-input' ref={emailInputRef}/>
-            <div style={{width: '10px'}}></div>
-            <button type='submit'>Request Access</button>
-          </form>
-
+          <div>
+            <h1 style={{marginTop: '0px'}}>
+              Welcome to MyWaifu.chat
+            </h1>
+            <p>
+            This is an early version of the MyWaifu.chat website. Check out the free demo to the right! You may send up to 15 messages for free.
+  If you wish to continue chatting after 15 messages you will need to sign up for our private alpha version.
+            </p>
+          </div>
+          <div>
+            <h1 style={{marginTop: '0px', paddingBottom: '15px', borderBottom: '1px solid #444444', width: '100%'}}>
+              Request alpha access
+            </h1>
+            <p>
+              Want to continue chatting? Sign up for our free private alpha!
+            </p>
+            <form id='email-form' ref={formRef}>
+              <input type="text" placeholder="Email" id='email-input' ref={emailInputRef}/>
+              <div style={{width: '10px'}}></div>
+              <button type='submit'>Request Access</button>
+            </form>
+          </div>
         </div>
         <ChatBox />
       </header>

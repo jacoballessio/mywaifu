@@ -1,7 +1,7 @@
 .chatBox{
     background-color: #444444;
     border-radius: 15px;
-    width: 20em;
+    width: 40em;
     height: 85vh;
     padding: 20px;
     display: flex;
@@ -91,14 +91,14 @@
     flex-wrap: wrap;
     margin-bottom: 10px;
     max-width: 80%;
+    width: max-content;
     padding: 15px;
     border-radius: 15px;
     animation: typing 1s steps(40, end);
     animation-fill-mode: forwards;
     animation-delay: 0.5s;
     overflow: hidden;
-
-
+    font-size: 1.2rem;
 }
     
 .ai-message{
