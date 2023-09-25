@@ -1,4 +1,4 @@
 .env
 *.env
 venv
-react
+react/mywaifu/node_modules

@@ -1,0 +1,18 @@
+.credit-button{
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background-color: #606060;
+    color: white;
+    font-size: 24px;
+    padding: 0px;
+    text-align: center;
+    line-height: 24px;  /* Vertically center text */
+    position: relative;
+    bottom: 22px;
+    border: 1px solid black;
+}
+
+.credit-circle {
+    background-color: #606060;
+}

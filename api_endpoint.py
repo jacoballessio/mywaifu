@@ -8,7 +8,7 @@ from flask_cors import CORS
 import os
 import json
 from werkzeug.utils import secure_filename
-from llama2_gen2 import llama2_gen_thread as LLM
+from llama2_gen import llama2_gen_thread as LLM
 from tts_phonemes import *
 from flask import send_file
 from flask import send_from_directory
@@ -28,15 +28,21 @@ class LLM_API(Resource):
         return {'hello': 'world'}
 
     def post(self):
+        #print the time it takes for each major step
+        import time
+        full_start_time = time.time()
+        start_time = time.time()
         #get the data from the request
         data = request.get_json()
-        print(data)
+        
         #get the text from the data
         user_text = data['text']
         #create an instance of the LLM class
         #get the LLM response
         llm_response = LLM(user_text)
-        print("__ll"+llm_response)
+        print('llm response time: ', time.time()-start_time)
+        start_time = time.time()
+
         #remove emojis
         cleaned_text = llm_response.encode('ascii', 'ignore').decode('ascii')
         
@@ -44,7 +50,12 @@ class LLM_API(Resource):
             cleaned_text = "Beeeeeep. Not sure how to pronounce that."
         #get the phoneme mappings and timings
         audio_file, timepoints, audio_dur, multiplier, ssml_text = get_tts_and_info(cleaned_text)
+        print('tts response time: ', time.time()-start_time)
+        start_time = time.time()
         phoneme_mappings = get_phoneme_words_and_mouth_shapes(timepoints, cleaned_text, audio_dur, multiplier)
+        print('phoneme mappings time: ', time.time()-start_time)
+        start_time = time.time()
+        print('full time: ', time.time()-full_start_time)
         #return the LLM response, phoneme mappings, and TTS audio
         return {'llm_response': llm_response, 'phoneme_mappings': phoneme_mappings, 'tts_audio': audio_file}
 
@@ -56,7 +67,7 @@ class Email_API(Resource):
     def post(self):
         #get the data from the request
         data = request.get_json()
-        print(data)
+
         #get the email from the data
         user_email = data['email']
         #store the email

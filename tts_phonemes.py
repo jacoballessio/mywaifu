@@ -70,10 +70,14 @@ PHONEME_TO_IMAGE_MAPPING = {
 def phoneme_to_image(phoneme):
     return "/build/static/media/lip_shapes/" + PHONEME_TO_IMAGE_MAPPING.get(phoneme, 'TS.png')
 
+    return mouth_shapes_and_timings
+from multiprocessing import Pool
+
 def get_phoneme_words_and_mouth_shapes(timepoints, text, audio_dur, multiplier):
     mouth_shapes_and_timings = []
     backend = EspeakBackend('en-us')
-    print("____pntext:"+str(text))
+    timepoints_len = len(timepoints)
+    
     phns = phonemize(
         text,
         language='en-us',
@@ -82,45 +86,33 @@ def get_phoneme_words_and_mouth_shapes(timepoints, text, audio_dur, multiplier):
         strip=True,
         preserve_punctuation=True,
         njobs=4)
-    print("____phn:"+str(phns))
-    #split the phonemes string into a list of phoneme words
+    
     phoneme_words = phns.split()
-    print("____phoneme_words:"+str(phoneme_words))
-    #for each phoneme word, get the start and end time of the associated timepoint
-    for i in range(len(timepoints)):
-        next_end = None
-        #if we;re at the last timepoint, set the end time to the end of the audio
-        if i == len(timepoints)-1:
+
+    if len(phoneme_words) != timepoints_len:
+        return "Length mismatch between phoneme words and timepoints."
+
+    for i in range(timepoints_len):
+        if i == timepoints_len - 1:
             next_end = audio_dur
         else:
             next_end = timepoints[i+1][1]
+        
+        start_time = max(0, timepoints[i][1] * multiplier)
+        end_time = max(0.1, next_end * multiplier)
+        
+        phoneme_word = phoneme_words[i]
+        phonemes_in_word = phoneme_word.split("|")
+        phoneme_count = len(phonemes_in_word)
+        
+        phoneme_duration = abs((end_time - start_time) / phoneme_count)
 
-        start_time = (timepoints[i][1]*multiplier)
-        end_time = (next_end*multiplier)
-        #make sure the start time is not negative
-        if start_time < 0:
-            start_time = 0
-        if end_time < 0:
-            end_time = 0.1
-        #get the phoneme word associated with this timepoint
-        try:
-            phoneme_word = phoneme_words[i]
-            #split the phoneme word into a list of phonemes
-            phonemes_in_word = phoneme_word.split("|")
-            print("____phonemes_in_word:"+str(phonemes_in_word))
-            phoneme_duration = abs((end_time - start_time)/len(phonemes_in_word))
-            print(abs(end_time - start_time))
-            print("____phoneme_duration:"+str(phoneme_duration))
-            for j in range(len(phonemes_in_word)):
-                phoneme = phonemes_in_word[j]
-                #convert phoneme to mouth shape
-                phoneme_image = phoneme_to_image(phoneme)
-                mouth_shapes_and_timings.append((phoneme_image, start_time + j*phoneme_duration, start_time + (j+1)*phoneme_duration))
-        except:
-            print("mismatch between phoneme words and timepoints")
-            #print the length of each
-            print("phoneme_words has a length of "+str(len(phoneme_words)))
-            print("timepoints has a length of "+str(len(timepoints)))
+        for j, phoneme in enumerate(phonemes_in_word):
+            phoneme_image = phoneme_to_image(phoneme)
+            start_t = start_time + j * phoneme_duration
+            end_t = start_time + (j + 1) * phoneme_duration
+            mouth_shapes_and_timings.append((phoneme_image, start_t, end_t))
+        
     return mouth_shapes_and_timings
 
 def obtain_access_token(service_account_file):
@@ -175,11 +167,11 @@ def synthesize_text_with_timepoints(text, service_account_file):
     payload = {
     "input": {"ssml": ssml_text},
     "voice": {
-        "languageCode": "en-UK",       # Set the language to Japanese
-        "name": "en-GB-Standard-A",    # Specify the voice name
-        "ssmlGender": "NEUTRAL",       # Keep the gender as NEUTRAL or adjust if needed
+        "languageCode": "en-US",       # Set the language to Japanese
+        "name": "en-US-Neural2-G",    # Specify the voice name
+        "ssmlGender": "FEMALE",       # Keep the gender as NEUTRAL or adjust if needed
     },
-    "audioConfig": {"audioEncoding": "MP3", "pitch": 8, "speakingRate": 1.1},
+    "audioConfig": {"audioEncoding": "MP3", "pitch": 2, "speakingRate": 1.4},
     "enableTimePointing": ["SSML_MARK"]
     }
 
@@ -204,7 +196,7 @@ def synthesize_text_with_timepoints(text, service_account_file):
 def get_tts_and_info(text):
     SERVICE_ACCOUNT_FILE = "service-account.json"
     #if text is all spaces, replace with random text
-    print("_resrwser_____________________________________________text:"+str(text))
+
     audio_content, timepoints, ssml_text = synthesize_text_with_timepoints(text, SERVICE_ACCOUNT_FILE)
     audio_file = f"build/static/media/{datetime.now().strftime('%Y%m%d%H%M%S')}.mp3"
     #first create the directory if it doesn't exist
