@@ -168,16 +168,12 @@ function ChatBox(props) {
                     {avatarAnimation}
                 </div>
                 <div className="chatBoxFooterContent">
-                    <div className="chatBoxFooterMessage">
-                        <input type="text" id="message-input" placeholder="Type a message" onKeyPress={(e) => {
+                    <input type="text" id="message-input" className="chatBoxFooterMessage" placeholder="Type a message" onKeyPress={(e) => {
                             if (e.key === 'Enter') {
                                 sendMessage();
                             }
                         }}/>
-                    </div>
-                    <div className="chatBoxFooterButton">
-                        <button id="send-button" onClick={sendMessage}>Send</button>
-                    </div>
+                    <button id="send-button" onClick={sendMessage}>Send</button>
                 </div>
             </div>
         </div>
