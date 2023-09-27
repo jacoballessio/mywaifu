@@ -97,6 +97,7 @@ def get_phoneme_words_and_mouth_shapes(timepoints, text, audio_dur, multiplier):
             next_end = audio_dur
         else:
             next_end = timepoints[i+1][1]
+<<<<<<< HEAD
         
         start_time = max(0, timepoints[i][1] * multiplier)
         end_time = max(0.1, next_end * multiplier)
@@ -113,6 +114,37 @@ def get_phoneme_words_and_mouth_shapes(timepoints, text, audio_dur, multiplier):
             end_t = start_time + (j + 1) * phoneme_duration
             mouth_shapes_and_timings.append((phoneme_image, start_t, end_t))
         
+=======
+
+        start_time = (timepoints[i][1]*multiplier)
+        end_time = (next_end*multiplier)
+        #make sure the start time is not negative
+        if start_time < 0:
+            start_time = 0
+        if end_time < 0:
+            end_time = 0.1
+        #get the phoneme word associated with this timepoint
+        try:
+            if i >= len(phoneme_words):
+                break
+            phoneme_word = phoneme_words[i]
+            #split the phoneme word into a list of phonemes
+            phonemes_in_word = phoneme_word.split("|")
+            print("____phonemes_in_word:"+str(phonemes_in_word))
+            phoneme_duration = abs((end_time - start_time)/len(phonemes_in_word))
+            print(abs(end_time - start_time))
+            print("____phoneme_duration:"+str(phoneme_duration))
+            for j in range(len(phonemes_in_word)):
+                phoneme = phonemes_in_word[j]
+                #convert phoneme to mouth shape
+                phoneme_image = phoneme_to_image(phoneme)
+                mouth_shapes_and_timings.append((phoneme_image, start_time + j*phoneme_duration, start_time + (j+1)*phoneme_duration))
+        except:
+            print("mismatch between phoneme words and timepoints")
+            #print the length of each
+            print("phoneme_words has a length of "+str(len(phoneme_words)))
+            print("timepoints has a length of "+str(len(timepoints)))
+>>>>>>> b9c067e6a1fb4665cca788e0e9cb4a569075eaf3
     return mouth_shapes_and_timings
 
 def obtain_access_token(service_account_file):

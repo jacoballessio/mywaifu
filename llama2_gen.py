@@ -17,20 +17,6 @@ model = AutoGPTQForCausalLM.from_quantized(model_name_or_path,model_basename=mod
 model.to("cuda")
 #     model.load_state_dict(torch.load("pytorch_model-0000"+i+"-of-00005.bin", map_location=torch.device('cuda:0')))
 def llama2_gen(text):
-    
-
-    """
-    To download from a specific branch, use the revision parameter, as in this example:
-
-    model = AutoGPTQForCausalLM.from_quantized(model_name_or_path,
-            revision="gptq-4bit-32g-actorder_True",
-            model_basename=model_basename,
-            use_safetensors=True,
-            trust_remote_code=True,
-            device="cuda:0",
-            quantize_config=None)
-    """
-
     prompt = text
     prompt = prompt.replace("USER:", "### Instruction:\n")
     prompt = prompt.replace("AI:", "### Response:\n")

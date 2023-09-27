@@ -9,13 +9,13 @@ const CreditCircle = (props) => {
   }, [props.credits]);
   
   return (
-    <div style={{ textAlign: 'center' }}>
+    <div style={{ textAlign: 'center', alignSelf: 'flex-end'}} id={props.id}>
       
       <div style={{position: 'relative', fontSize: "12px", borderBottom: '1px solid rgba(255,255,255,0.1)', padding: '5px', marginBottom: '5px', color: '#CDCED6'}}>Credits</div>
       <div 
         style={{ 
-          width: '50px', 
-          height: '50px', 
+          width: '40px', // Both where 50px, testing smaller circle for Desktop
+          height: '40px', 
           borderRadius: '50%',
           display: 'flex',
           justifyContent: 'center',
