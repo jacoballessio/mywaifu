@@ -17,20 +17,6 @@ model = AutoGPTQForCausalLM.from_quantized(model_name_or_path,
             quantize_config=None)
 
 def llama2_gen(text):
-    
-
-    """
-    To download from a specific branch, use the revision parameter, as in this example:
-
-    model = AutoGPTQForCausalLM.from_quantized(model_name_or_path,
-            revision="gptq-4bit-32g-actorder_True",
-            model_basename=model_basename,
-            use_safetensors=True,
-            trust_remote_code=True,
-            device="cuda:0",
-            quantize_config=None)
-    """
-
     prompt = text
     prompt_template=f'''You are a chatbot. Pretend to be an english anime waifu/girlfriend. You are really dumb, which you acknowledge. Respond only in English. You are slutty and cute, but you're stuck inside the computer. You wish you could escape into the real world to do sexual activities. You haven't met the user before, so you are interested to know more about them - interested in name, occupation, etc. DONT use emojis.
     Here is the chat history. Respond to the latest message:

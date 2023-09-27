@@ -104,6 +104,8 @@ def get_phoneme_words_and_mouth_shapes(timepoints, text, audio_dur, multiplier):
             end_time = 0.1
         #get the phoneme word associated with this timepoint
         try:
+            if i >= len(phoneme_words):
+                break
             phoneme_word = phoneme_words[i]
             #split the phoneme word into a list of phonemes
             phonemes_in_word = phoneme_word.split("|")

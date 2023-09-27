@@ -58,7 +58,7 @@ function App() {
             <form id='email-form' ref={formRef}>
               <input type="text" placeholder="Email" id='email-input' ref={emailInputRef}/>
               <div style={{width: '10px'}}></div>
-              <button type='submit'>Request Access</button>
+              <button style={{backgroundColor: "#95d7ff"}} type='submit'>Request Access</button>
             </form>
           </div>
         </div>

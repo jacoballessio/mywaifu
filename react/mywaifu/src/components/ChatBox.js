@@ -4,6 +4,7 @@ import './ChatBox.css';
 import MBP from '../assets/imgs/MBP.png';
 import CreditCircle from './CreditCircle';
 import ImageAudioAnimation from './ImageAudioAnimation';
+import Typing from './Typing';
 
 import {hostname} from '../config.js'
 const delayAmount = 0.01;
@@ -15,6 +16,7 @@ function ChatBox(props) {
     const [messages, setMessages] = React.useState(JSON.parse(localStorage.getItem('messages')) || []);
     const chatBoxBodyRef = React.useRef(null);
     const [credits, setCredits] = React.useState(localStorage.getItem('credits') || startingCredits);
+    const [isTyping, setIsTyping] = React.useState(false);
 
     //on messages re-render, scroll to the bottom
     React.useEffect(() => {
@@ -51,8 +53,12 @@ function ChatBox(props) {
         const message = document.getElementById('message-input').value;
         //clear the input box
         let messageElement = {message: message, type: 'user'};
-        let typingElement = {message: 'typing...', type: 'AI'};
-        setMessages(prevMessages => [...prevMessages, messageElement, typingElement])
+        setMessages(prevMessages => [...prevMessages, messageElement]);
+        //clear the input box
+        document.getElementById('message-input').value = '';
+
+
+        setIsTyping(true);
          //if waiting on a response, don't send another message
         try{
             console.log(messages[messages.length-1])
@@ -63,6 +69,7 @@ function ChatBox(props) {
             //messages is empty
         }
         document.getElementById('message-input').value = '';
+
         //send the message to the server
         fetch(hostname+'/llm', {
             method: 'POST',
@@ -79,6 +86,7 @@ function ChatBox(props) {
             console.log(data);
             console.log(data.llm_response);
             let resElement = {message: data.llm_response, type: 'ai'};
+            
             //begin animation. Frames and timings are in data.phoneme_mappings. data.phoneme_mappings is a tuple where the first element is the frame and second/third are start/end times
             let frames = [];
             let timings = [];
@@ -92,13 +100,16 @@ function ChatBox(props) {
             for (let i = 0; i < audios.length; i++) {
                 audios[i].pause();
             }
+            let hasRun = false;
             setAvatarAnimation(<ImageAudioAnimation frames={frames} timings={timings} audioSrc={hostname+'/'+data.tts_audio} 
-                onload={function(){
-                    
-                    setMessages(prevMessages => prevMessages.slice(0, prevMessages.length-1));
-                    
+                onload={()=>{
+                    //only run this once
+                    if (hasRun) {
+                        return;
+                    }
+                    hasRun = true;
+                    setIsTyping(false);
                     setMessages(prevMessages => [...prevMessages, resElement])
-                    
                 }}
             />);
             
@@ -109,13 +120,15 @@ function ChatBox(props) {
         <div className="chatBox">
             <div className="chatBoxHeader">
                 <div className="chatBoxHeaderContent">
-                    <div className="chatBoxHeaderName">
+                    {/* <div className="chatBoxHeaderName">
                         {props.name}
                     </div>
                     <div className="chatBoxHeaderStatus">
                         {props.status}
-                    </div>
-                    <CreditCircle credits={credits}/>
+                    </div> */}
+                    <div id="chatBoxAvatarName">Amelia</div>
+
+                    <CreditCircle id={"creditCircle"} credits={credits}/>
                 </div>
             </div>
             <div className="chatBoxBody" ref={chatBoxBodyRef} id="chatBoxBody">
@@ -141,21 +154,25 @@ function ChatBox(props) {
                                 }
                                 else {
                                     return (
-                                        <div className="chatBoxBodyMessage ai-message" key={index}>
-                                            {/*split each character into a span*/}
-                                            {/*remove leading and trailing whitespace*/}
-                                            {Array.from(message.message.trim()).map((char, index) => {
-                                                
-                                                let delayAmount = Math.random()*0.1;
-                                                delay+=delayAmount;
-                                                if (char === ' ') {
-                                                    char = '\u00A0';
-                                                }
-                                                return (
-                                                    <span key={index} style={{animationDelay:delay+'s'}}>{char}</span>
-                                                )
-                                            })}
+                                        <div className='ai-message-container'>
+                                            {/*profile pic*/}
+                                            <img src={MBP} alt="MBP" className='chat-avatar-profile'/>
+                                            <div className="chatBoxBodyMessage ai-message" key={index}>
+                                                {/*split each character into a span*/}
+                                                {/*remove leading and trailing whitespace*/}
+                                                {Array.from(message.message.trim()).map((char, index) => {
+                                                    
+                                                    let delayAmount = Math.random()*0.1;
+                                                    delay+=delayAmount;
+                                                    if (char === ' ') {
+                                                        char = '\u00A0';
+                                                    }
+                                                    return (
+                                                        <span key={index} style={{animationDelay:delay+'s'}}>{char}</span>
+                                                    )
+                                                })}
 
+                                            </div>
                                         </div>
                                     )
                                 }
@@ -175,6 +192,7 @@ function ChatBox(props) {
                         }}/>
                     <button id="send-button" onClick={sendMessage}>Send</button>
                 </div>
+                <Typing isTyping={isTyping}/>
             </div>
         </div>
     );
